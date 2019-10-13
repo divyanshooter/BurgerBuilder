@@ -3,6 +3,7 @@ import { connect } from 'react-redux';
 import Spinner from '../../../Components/UI/Spinner/Spinner';
 import Axios from '../../../AxiosInstance';
 import classes from './ContactData.module.css';
+import * as actions from '../../../store/actions/index';
 class ContactData extends Component
 {
   state={
@@ -12,7 +13,6 @@ class ContactData extends Component
         street:" ",
         postalCode:" "
     },
-    loading:false
   }
 
   orderHandler=(event)=>{
@@ -29,14 +29,8 @@ class ContactData extends Component
         email:"test@test.gmail.com"
       }
     }
-    Axios.post('/order.json',order)
-    .then(response=>{
-      this.setState({loading:false})
-      this.props.history.push('/');
-    })
-    .catch(error=>{
-      this.setState({loading:false})
-    });
+    this.props.onOrderBurger(order);
+   
   }
   render()
   {
@@ -47,7 +41,7 @@ class ContactData extends Component
     <input className={classes.input} type='text' name='postalCode' placeholder='xxx-xxx'/>
     <button onClick={this.orderHandler}>Order</button>
     </form>);
-    if(this.state.loading)
+    if(this.props.loading)
     {
        form=<Spinner/>
     }
@@ -62,9 +56,16 @@ class ContactData extends Component
 }
 const mapStateToProps=state=>{
   return {
-     ings:state.ingredients,
-     totalPrice:state.totalPrice
-  };
+     ings:state.burgerBuilder.ingredients,
+     totalPrice:state.burgerBuilder.totalPrice,
+     loading:state.order.loading
+     };
+ }
+
+const mapDispatchToProps=dispatch=>{
+  return {
+     onOrderBurger:(orderData)=>dispatch(actions.purchaseBurger(orderData))
+  }
 }
 
-export default connect(mapStateToProps)(ContactData);
+export default connect(mapStateToProps,mapDispatchToProps)(ContactData);
