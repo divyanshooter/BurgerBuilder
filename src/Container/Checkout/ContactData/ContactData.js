@@ -4,49 +4,190 @@ import Spinner from '../../../Components/UI/Spinner/Spinner';
 import Axios from '../../../AxiosInstance';
 import classes from './ContactData.module.css';
 import * as actions from '../../../store/actions/index';
+import Button from '../../../Components/UI/Button/Button';
+import Input from '../../../Components/UI/Input/Input';
+import BurgerBuilder from '../../BurgerBuilder/BurgerBuilder';
 class ContactData extends Component
 {
   state={
-    name:"",
-    email: "",
-    address:{
-        street:" ",
-        postalCode:" "
-    },
+       orderForm:{
+        name:{
+             elementType:'input',
+             elementConfig:{
+                            type:'text',
+                            placeholder:'Your Name'
+                           },
+              value:'',
+              validation :{
+                            required:true,
+                          },
+              valid:false,
+              touched:false
+          },
+        street:{
+             elementType:'input',
+             elementConfig:{
+                            type:'text',
+                            placeholder:'Street'
+                           },
+              value:'',
+              validation :{
+                            required:true,
+                          },
+              valid:false,
+              touched:false
+          },
+        zipcode:{
+             elementType:'input',
+             elementConfig:{
+                            type:'text',
+                            placeholder:'Zip Code'
+                           },
+              value:'',
+              validation :{
+                            required:true,
+                            minLength:5,
+                            maxLength:7
+
+                          },
+              valid:false,
+              touched:false
+          },
+       Country:{
+             elementType:'input',
+             elementConfig:{
+                       type:'text',
+                       placeholder:'Country'
+                      },
+             value:'',
+             validation :{
+                       required:true,
+                     },
+              valid:false,
+              touched:false
+                    },
+        email:{
+             elementType:'input',
+             elementConfig:{
+                            type:'email',
+                            placeholder:'Your Email'
+                           },
+              value:'',
+              validation :{
+                            required:true,
+                          },
+              valid:false,
+              touched:false
+          },
+        delivery:{
+             elementType:'select',
+             elementConfig:{
+                            options:[
+                              {value:'fastest',displayValue:'Fastest'},
+                              {value:'cheapest',displayValue:'Cheapest'}
+                            ]
+                          
+                           },
+              value:'fastest',
+              validation:{},
+              valid:true
+          }
+      },
+      formValid:false
   }
 
   orderHandler=(event)=>{
     event.preventDefault();
-    this.setState({loading:true});
+    const formData={};
+    for( let key in this.state.orderForm)
+    {
+      formData[key]=this.state.orderForm[key].value;
+    }
+
     const order={
       ingredients:this.props.ings,
       price:this.props.totalPrice,
-      customer:{
-        name:"Divyanshu Chaturvedi",
-        address:{
-          street:"35783 India"
-        },
-        email:"test@test.gmail.com"
-      }
+      orderData:formData
     }
     this.props.onOrderBurger(order);
    
   }
+  checkValidity=(value,rules)=>{
+      let isValid=true;
+      if(!rules)
+      { 
+        return true;
+
+      }
+    
+      if(rules.required)
+       {
+         isValid=value.trim()!=='' && isValid;
+       }
+      if(rules.minLength)
+      {
+        isValid=value.length>=rules.minLength && isValid;
+      }
+      if(rules.maxLength)
+      {
+        isValid=value.length <=rules.maxLength && isValid;
+      }
+      return isValid;
+
+  }
+  inputChangedHandler=(event,identifier)=>{
+    const updatedOrderForm={
+      ...this.state.orderForm
+    }
+    const updatedFormElement={
+      ...updatedOrderForm[identifier]
+    }
+    updatedFormElement.value=event.target.value;
+    updatedFormElement.valid=this.checkValidity(updatedFormElement.value,updatedFormElement.validation);
+    updatedFormElement.touched=true;
+    updatedOrderForm[identifier]=updatedFormElement;
+    let formValid=true;
+    for(let key in updatedOrderForm)
+    {
+       formValid=formValid && updatedOrderForm[key].valid;
+    }
+    this.setState({orderForm:updatedOrderForm,formValid});
+    
+    
+  
+  }
   render()
   {
-    let form=(<form>
-    <input className={classes.input} type='text' name='name' placeholder='HMr.John'/>
-    <input className={classes.input} type='email' name='name' placeholder='Hklsl@gmail.com'/>
-    <input className={classes.input} type='text' name='street' placeholder='HMrf;rrk'/>
-    <input className={classes.input} type='text' name='postalCode' placeholder='xxx-xxx'/>
-    <button onClick={this.orderHandler}>Order</button>
-    </form>);
+    const formElementArray=[];
+    for(let key in this.state.orderForm)
+      {
+        formElementArray.push({
+          id:key,
+          config:this.state.orderForm[key]
+        })
+      }
+    let form=(
+      <form onSubmit={this.orderHandler}>
+        {formElementArray.map((curr,index)=>(
+           <Input key={curr.id + index}
+                 elementType={curr.config.elementType} 
+                 elementConfig={curr.config.elementConfig} 
+                 value={curr.config.value}
+                 valid={curr.config.valid}
+                 shouldValidate={curr.config.validation}
+                 touched={curr.config.touched}
+                 changed={(event)=>this.inputChangedHandler(event,curr.id)}/>
+           )
+         )}
+        <Button btType="Success" disabled={!this.state.formValid}>Order</Button>
+       </form>
+     );
     if(this.props.loading)
     {
        form=<Spinner/>
     }
     return(
-      <div className={classes.ContactData}>
+      <div className="input" >
       <h4> Enter Your Conatct Details</h4>
         {form}
       </div>
